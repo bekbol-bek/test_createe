@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Тест</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+   body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #e0e7ff, #f8fafc);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  color: #222;
+}
+
+#login-screen,
+#test-screen {
+  background: #ffffff;
+  padding: 40px 50px;
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+h1, h2 {
+  margin-bottom: 25px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  margin-bottom: 25px;
+  box-sizing: border-box;
+  transition: border 0.3s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+button {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  margin-top: 10px;
+}
+
+button:hover {
+  background: #4f46e5;
+  transform: scale(1.03);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.question-block {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 25px;
+  text-align: left;
+  transition: background 0.3s;
+}
+
+.question-block:hover {
+  background: #e2e8f0;
+}
+
+.question-block strong {
+  display: block;
+  font-size: 17px;
+  margin-bottom: 12px;
+  color: #1e293b;
+}
+
+.question-block label {
+  display: block;
+  margin: 10px 0;
+  font-size: 16px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.question-block input[type="radio"] {
+  margin-right: 10px;
+}
+
+#result {
+  text-align: center;
+  margin-top: 30px;
+  font-weight: bold;
+  font-size: 20px;
+  color: #22c55e;
+}
+@media (max-width: 768px) {
+  body {
+    padding: 20px;
+  }
+
+  #login-screen,
+  #test-screen {
+    padding: 30px 20px;
+    border-radius: 18px;
+    max-width: 100%;
+  }
+
+  h1, h2 {
+    font-size: 26px;
+  }
+
+  input[type="text"] {
+    padding: 16px 18px;
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  button {
+    width: 100%;
+    font-size: 18px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .question-block {
+    padding: 20px;
+  }
+
+  .question-block strong {
+    font-size: 18px;
+  }
+
+  .question-block label {
+    font-size: 17px;
+  }
+
+  #result {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1, h2 {
+    font-size: 24px;
+  }
+
+  input[type="text"] {
+    font-size: 17px;
+  }
+
+  button {
+    font-size: 17px;
+    padding: 15px;
+  }
+
+  .question-block strong {
+    font-size: 17px;
+  }
+
+  .question-block label {
+    font-size: 16px;
+  }
+
+  #result {
+    font-size: 20px;
+  }
+}
+
+
+
+
+  </style>
+</head>
+<body>
+  
+    <div id="login-screen">
+        <h2>Введите ваше имя и класс</h2>
+        <input type="text" id="student-name" placeholder="Рысбеков Бекбол (10К)">
+        <button onclick="startTest()">Начать тест</button>
+      </div>
+      
+      <div id="test-screen" style="display: none;">
+        <h1>Тест</h1>
+        <div id="testContainer"></div>
+        <button onclick="submitTest()">Отправить</button>
+        <p id="result"></p>
+      </div>
+<script>
+// Получаем testId из URL
+// Получаем закодированные данные из URL
+// Получаем testId из URL
+const urlParams = new URLSearchParams(window.location.search);
+const testId = urlParams.get('testId');
+
+let testData = [];  // Здесь будут храниться данные теста
+
+function startTest() {
+    const name = document.getElementById('student-name').value.trim();
+    if(!name) return alert('Введите имя!');
+    localStorage.setItem('currentStudent', name);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('test-screen').style.display = 'block';
+    
+    // Загружаем тест только после ввода имени
+    loadTest();
+}
+
+function loadTest() {
+    const params = new URLSearchParams(window.location.search);
+    const testId = params.get("testId");
+
+    if (!testId) {
+        document.getElementById('testContainer').innerText = 'Тест не найден (нет testId в ссылке).';
+        return;
+    }
+
+    const request = indexedDB.open("TestDatabase", 1);
+
+    request.onerror = function () {
+        document.getElementById('testContainer').innerText = 'Ошибка при открытии базы данных.';
+    };
+
+    request.onsuccess = function (event) {
+        const db = event.target.result;
+        const transaction = db.transaction(["tests"], "readonly");
+        const store = transaction.objectStore("tests");
+
+        const getRequest = store.get(testId);
+
+        getRequest.onsuccess = function () {
+            const result = getRequest.result;
+
+            if (!result) {
+                document.getElementById('testContainer').innerText = 'Тест не найден в базе данных.';
+                return;
+            }
+
+            const testData = result.questions;
+            const container = document.getElementById('testContainer');
+            container.innerHTML = ''; // Очистить
+
+            testData.forEach((q, index) => {
+                const block = document.createElement('div');
+                block.className = 'question-block';
+
+                let html = `<strong>Вопрос ${index + 1}:</strong> ${q.question}<br><br>`;
+
+                if (q.audio) {
+                    html += `<audio controls src="${q.audio}"></audio><br><br>`;
+                }
+
+                q.answers.forEach((a, i) => {
+                    html += `<label><input type="radio" name="question-${index}" value="${i}"> ${a}</label><br>`;
+                });
+
+                block.innerHTML = html;
+                container.appendChild(block);
+            });
+        };
+
+        getRequest.onerror = function () {
+            document.getElementById('testContainer').innerText = 'Ошибка при загрузке теста.';
+        };
+    };
+}
+
+
+
+// function loadTest() {
+//     if (!testId) {
+//         document.getElementById('testContainer').innerText = 'Тест не найден (нет testId в ссылке).';
+//         return;
+//     }
+    
+//     const stored = localStorage.getItem(testId);
+//     if (!stored) {
+//         document.getElementById('testContainer').innerText = 'Тест не найден в LocalStorage.';
+//         return;
+//     }
+    
+//     testData = JSON.parse(stored);
+//     const container = document.getElementById('testContainer');
+//     container.innerHTML = ''; // Очищаем контейнер
+
+//     testData.forEach((q, index) => {
+//         const block = document.createElement('div');
+//         block.className = 'question-block';
+
+//         let html = `<strong>Вопрос ${index + 1}:</strong> ${q.question}<br><br>`;
+
+//         if (q.audio) {
+//             html += `<audio controls src="${q.audio}"></audio><br><br>`;
+//         };
+
+//         q.answers.forEach((a, i) => {
+//             html +=` <label><input type="radio" name="question-${index}" value="${i}"> ${a}</label><br>`;
+//         });
+
+//         block.innerHTML = html;
+//         container.appendChild(block);
+//     });
+// }
+
+function submitTest() {
+    const studentName = localStorage.getItem('currentStudent');
+    let score = 0;
+    const userAnswers = [];
+
+    testData.forEach((q, index) => {
+        const selected = document.querySelector(`input[name="question-${index}"]:checked`);
+        const answerIndex = selected ? parseInt(selected.value) : null;
+        userAnswers.push(answerIndex);
+
+        if (answerIndex === q.correct) score++;
+    });
+
+    const result = {
+        student: studentName,
+        testId: testId,
+        score: `${score}/${testData.length}`,
+        date: new Date().toLocaleString(),
+        answers: userAnswers
+    };
+
+    saveResult(result);
+    document.getElementById('result').innerText = `Результат: ${score}/${testData.length}`;
+}
+
+function saveResult(result) {
+    const allResults = JSON.parse(localStorage.getItem('testResults') || '[]');
+    allResults.push(result);
+    localStorage.setItem('testResults', JSON.stringify(allResults));
+}
+
+</script>
+</body>
+</html>

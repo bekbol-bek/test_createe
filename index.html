@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Создать тест</title>
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+  <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+  <style>
+   
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #ffffff, #e0eafc, #cfdef3);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .center-box {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 700px;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    .question-block {
+  background: linear-gradient(-45deg, #f0f0f0, #e3f2fd, #e1f5fe, #fff);
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  border: 1px solid #d9e2ec;
+}
+
+.question-block label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.question-block input[type="text"],
+.question-block input[type="number"],
+.question-block input[type="file"] {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  background: white;
+  transition: border-color 0.3s;
+}
+
+.question-block input[type="text"]:focus,
+.question-block input[type="number"]:focus,
+.question-block input[type="file"]:focus {
+  border-color: #3399ff;
+  outline: none;
+}
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background-color: #0066ff;
+      color: white;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #004ecc;
+    }
+
+    a button {
+      background-color: #555;
+    }
+
+    a button:hover {
+      background-color: #333;
+    }
+
+    #testLink {
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="center-box">
+    <h1>Создать тест</h1>
+    <div id="questions"></div>
+    
+    <div class="buttons">
+      <button onclick="addQuestion()"><i class="fi fi-br-plus"></i> Добавить вопрос</button>
+      <button onclick="saveTest()"><i class="fi fi-sr-bookmark"></i> Сохранить тест</button>
+      <a href="teacher.html">
+        <button><i class="fi fi-ss-chart-simple-horizontal"></i> Посмотреть результаты</button>
+      </a>
+    </div>
+
+    <h2>Ссылка на тест:</h2>
+    <input type="text" id="testLink" readonly>
+    <button onclick="copyLink()"><i class="fi fi-ss-duplicate"></i> Копировать ссылку</button>
+
+  </div>
+  <script src="db.js"></script>
+
+  <!-- Потом функции, которые используют базу -->
+  <script src="saveTest.js"></script>
+  <script src="loadTest.js"></script>
+  <script>
+    let testData = [];
+
+    function addQuestion() {
+      const container = document.getElementById('questions');
+      const block = document.createElement('div');
+      block.className = 'question-block';
+      block.innerHTML = `
+        <label>Вопрос: <input type="text" class="question-text"></label><br>
+        <label>Голосовой файл (mp3): <input type="file" accept="audio/*" class="audio-file"></label><br>
+
+        <label>Вариант 1: <input type="text" class="answer"></label><br>
+        <label>Вариант 2: <input type="text" class="answer"></label><br>
+        <label>Вариант 3: <input type="text" class="answer"></label><br>
+        <label>Вариант 4: <input type="text" class="answer"></label><br>
+        <label>Правильный вариант (1-4): <input type="number" min="1" max="4" class="correct"></label>
+      `;
+      container.appendChild(block);
+    }
+    function saveTest() {
+  onDBReady(() => {
+    const questions = document.querySelectorAll('.question-block');
+    const data = [];
+    const promises = [];
+
+    for (let block of questions) {
+      const question = block.querySelector('.question-text').value;
+      const answers = [...block.querySelectorAll('.answer')].map(input => input.value);
+      const correct = parseInt(block.querySelector('.correct').value) - 1;
+      const audioInput = block.querySelector('.audio-file');
+      const audioFile = audioInput.files[0];
+
+      if (!question || answers.some(a => !a) || isNaN(correct) || correct < 0 || correct > 3) {
+        alert('Пожалуйста, заполните все поля корректно.');
+        return;
+      }
+
+      const item = { question, answers, correct };
+
+      if (audioFile) {
+        const reader = new FileReader();
+        const promise = new Promise(resolve => {
+          reader.onload = () => {
+            item.audio = reader.result;
+            data.push(item);
+            resolve();
+          };
+          reader.readAsDataURL(audioFile);
+        });
+        promises.push(promise);
+      } else {
+        item.audio = null;
+        data.push(item);
+      }
+    }
+
+    Promise.all(promises).then(() => {
+      const testId = `test-${Date.now()}`;
+      const transaction = db.transaction(["tests"], "readwrite");
+      const store = transaction.objectStore("tests");
+
+      const testObject = {
+        id: testId,
+        questions: data,
+      };
+
+      const request = store.add(testObject);
+
+      request.onsuccess = function () {
+        const link = `${window.location.origin}/view.html?testId=${testId}`;
+        document.getElementById('testLink').value = link;
+        alert("Тест сохранён в IndexedDB!");
+      };
+
+      request.onerror = function (event) {
+        console.error("Ошибка при сохранении теста:", event.target.error);
+      };
+    });
+  });
+}
+
+
+//     function saveTest() {
+//   const questions = document.querySelectorAll('.question-block');
+//   const data = [];
+//   const promises = [];
+
+//   console.log('Начало сохранения теста');
+
+//   for (let block of questions) {
+//     const question = block.querySelector('.question-text').value;
+//     const answers = [...block.querySelectorAll('.answer')].map(input => input.value);
+//     const correct = parseInt(block.querySelector('.correct').value) - 1;
+//     const audioInput = block.querySelector('.audio-file');
+//     const audioFile = audioInput.files[0];
+
+//     if (!question || answers.some(a => !a) || isNaN(correct) || correct < 0 || correct > 3) {
+//       alert('Пожалуйста, заполните все поля корректно.');
+//       return;
+//     }
+
+//     const item = { question, answers, correct, audio: null };
+
+//     if (audioFile) {
+//       const reader = new FileReader();
+//       const promise = new Promise(resolve => {
+//         reader.onload = () => {
+//           item.audio = reader.result;
+//           data.push(item);
+//           resolve();
+//         };
+//         reader.readAsDataURL(audioFile);
+//       });
+//       promises.push(promise);
+//     } else {
+//       data.push(item);
+//     }
+//   }
+
+//   // Дождаться всех аудио
+//   Promise.all(promises).then(() => {
+//     console.log('Все файлы загружены, создаем ссылку...');
+//     const testId = ` test-${Date.now()}`;
+//     localStorage.setItem(testId, JSON.stringify(data));
+//     const link = `${window.location.origin}/view.html?testId=${testId}`;
+//     document.getElementById('testLink').value = link;
+//     console.log('Ссылка создана:', link);
+//   }).catch(error => {
+//     console.log('Ошибка при загрузке файлов:', error);
+//   });
+// }
+
+
+
+
+function copyLink() {
+    const linkInput = document.getElementById('testLink');
+    linkInput.select();
+    linkInput.setSelectionRange(0, 99999); // для мобильных устройств
+
+    document.execCommand('copy');
+
+    // Можно показать сообщение
+    alert("Ссылка скопирована!");
+  }
+  </script>
+</div>
+</body>
+</html>
