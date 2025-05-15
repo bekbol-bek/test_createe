@@ -201,7 +201,9 @@
       const request = store.add(testObject);
 
       request.onsuccess = function () {
-        const link = `${window.location.origin}/view.html?testId=${testId}`;
+        const repoName = 'test_createe'; // Имя твоего репозитория на GitHub
+       const link = `${window.location.origin}/${repoName}/view.html?testId=${testId}`;
+
         document.getElementById('testLink').value = link;
         alert("Тест сохранён в IndexedDB!");
       };
